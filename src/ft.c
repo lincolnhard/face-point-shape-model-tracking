@@ -9,16 +9,16 @@
 #include "ft.h"
 
 //offset from center of detection
-const float detector_offset[3]
+const double landmark_pos_offset[3]
 = { 1.6536409384571016e-004,    //x offset
 6.9505050778388977e-002,        //y offset
 1.0779559612274170e+000 };      //z offset
 
 //reference shape
-const float detector_reference[FEATURE_POINTS_NUMBER * 2]
-= { -2.36834377e-001f, -1.52252734e-001f, -1.74737900e-001f, -1.86025843e-001f, -1.08994968e-001f, -1.50997117e-001f, -1.74627200e-001f, -1.30853847e-001f, -1.73743188e-001f, -1.60203025e-001f, 2.36834377e-001f, -1.52252734e-001f, 1.74737900e-001f, -1.86025843e-001f, 1.08994968e-001f, -1.50997117e-001f,
-1.74627200e-001f, -1.30853847e-001f, 1.73743188e-001f, -1.60203025e-001f, -5.55575900e-002f, -5.15604019e-002f, -1.14637300e-001f, 1.79423634e-002f, -8.92707780e-002f, 6.74422234e-002f, -7.81051890e-011f, 8.43043178e-002f, 8.92707780e-002f, 6.74422234e-002f, 1.14637300e-001f, 1.79423634e-002f,
-5.55575900e-002f, -5.15604019e-002f, -1.46306455e-001f, 2.00696975e-001f, -9.03487951e-002f, 1.60236150e-001f, -1.45190013e-010f, 1.52209312e-001f, 9.03487951e-002f, 1.60236150e-001f, 1.46306455e-001f, 2.00696975e-001f, 5.99500276e-002f, 2.67318457e-001f, -5.99500276e-002f, 2.67318457e-001f };
+const double landmark_init_pos_norm[FEATURE_POINTS_NUMBER * 2]
+= { -2.36834377e-001, -1.52252734e-001, -1.74737900e-001, -1.86025843e-001, -1.08994968e-001, -1.50997117e-001, -1.74627200e-001, -1.30853847e-001, -1.73743188e-001, -1.60203025e-001, 2.36834377e-001, -1.52252734e-001, 1.74737900e-001, -1.86025843e-001f, 1.08994968e-001, -1.50997117e-001,
+1.74627200e-001, -1.30853847e-001, 1.73743188e-001, -1.60203025e-001, -5.55575900e-002, -5.15604019e-002, -1.14637300e-001, 1.79423634e-002, -8.92707780e-002, 6.74422234e-002, -7.81051890e-011, 8.43043178e-002, 8.92707780e-002, 6.74422234e-002, 1.14637300e-001, 1.79423634e-002,
+5.55575900e-002, -5.15604019e-002, -1.46306455e-001, 2.00696975e-001, -9.03487951e-002, 1.60236150e-001, -1.45190013e-010, 1.52209312e-001, 9.03487951e-002, 1.60236150e-001, 1.46306455e-001, 2.00696975e-001, 5.99500276e-002, 2.67318457e-001, -5.99500276e-002, 2.67318457e-001 };
 
 //transformation matrix to sub-space
 const double shapemodel_V[FEATURE_POINTS_NUMBER * 2 * SUB_SPACE_DIM]
@@ -51,20 +51,23 @@ const double shapemodel_V[FEATURE_POINTS_NUMBER * 2 * SUB_SPACE_DIM]
 const double shapemodel_e[SUB_SPACE_DIM]
 = { -1., -1., -1., -1., 0.05478511978630694, 0, 0.03652705517831954, 0 };
 
-const float patchmodel_reference[FEATURE_POINTS_NUMBER * 2]
-= { -50.f, -3.21432915e+001f, -3.68903160e+001f, -3.92734032e+001f, -2.30107994e+001f, -3.18782082e+001f, -3.68669434e+001f, -2.76256027e+001f, -3.66803131e+001f, -3.38217430e+001f, 50.f, -3.21432915e+001f, 3.68903160e+001f, -3.92734032e+001f, 2.30107994e+001f, -3.18782082e+001f, 3.68669434e+001f,
--2.76256027e+001f, 3.66803131e+001f, -3.38217430e+001f, -1.17292070e+001f, -1.08853283e+001f, -2.42019978e+001f, 3.78795576e+000f, -1.88466682e+001f, 1.42382669e+001f, -1.64894107e-008f, 1.77981586e+001f, 1.88466682e+001f, 1.42382669e+001f, 2.42019978e+001f, 3.78795576e+000f, 1.17292070e+001f,
--1.08853283e+001f, -3.08879261e+001f, 4.23707428e+001f, -1.90742569e+001f, 3.38287354e+001f, -3.06522239e-008f, 3.21341248e+001f, 1.90742569e+001f, 3.38287354e+001f, 3.08879261e+001f, 4.23707428e+001f, 1.26565294e+001f, 5.64357376e+001f, -1.26565294e+001f, 5.64357376e+001f };
+const double patchmodel_reference[FEATURE_POINTS_NUMBER * 2]
+= { -50., -3.21432915e+001, -3.68903160e+001, -3.92734032e+001, -2.30107994e+001, -3.18782082e+001, -3.68669434e+001, -2.76256027e+001, -3.66803131e+001, -3.38217430e+001, 50., -3.21432915e+001, 3.68903160e+001, -3.92734032e+001, 2.30107994e+001, -3.18782082e+001, 3.68669434e+001,
+-2.76256027e+001, 3.66803131e+001, -3.38217430e+001, -1.17292070e+001, -1.08853283e+001, -2.42019978e+001, 3.78795576e+000, -1.88466682e+001, 1.42382669e+001, -1.64894107e-008, 1.77981586e+001, 1.88466682e+001, 1.42382669e+001, 2.42019978e+001, 3.78795576e+000, 1.17292070e+001,
+-1.08853283e+001, -3.08879261e+001, 4.23707428e+001, -1.90742569e+001, 3.38287354e+001, -3.06522239e-008, 3.21341248e+001, 1.90742569e+001, 3.38287354e+001, 3.08879261e+001, 4.23707428e+001, 1.26565294e+001, 5.64357376e+001, -1.26565294e+001, 5.64357376e+001 };
 
-const float patchmodel_patchmean[FEATURE_POINTS_NUMBER]
-= { 6.21138296e-09f, 5.84193272e-09f, 1.9981103e-08f, -2.2320954e-09f, 6.68089273e-09f, 9.55952562e-09f, 4.79515672e-09f, 1.1791621e-08f, -4.90676166e-09f, 3.74068421e-09f, 4.39184014e-08f, 5.06608693e-08f, 2.80416614e-08f, 2.9255844e-08f, 3.24962315e-08f, 4.33815437e-08f, 8.5989555e-08f,
-1.45086201e-08f, 2.0427521e-08f, 3.71374504e-08f, 1.83185769e-08f, 1.58709685e-08f, 8.32494607e-08f, 5.62949865e-08f };
+const double patchmodel_reference_square_sum_reciprocal
+= 2.2436210877e-05;
 
-const float patchmodel_patchstddev[FEATURE_POINTS_NUMBER]
-= { 0.134744823f, 0.123415157f, 0.139128074f, 0.0994755104f, 0.132120162f, 0.137144953f, 0.128151864f, 0.132752731f, 0.0971035734f, 0.143054113f, 0.106319413f, 0.104697235f, 0.103702798f, 0.0862262845f, 0.117471114f, 0.136615664f, 0.108107507f, 0.142582104f, 0.0805974901f, 0.0704699755f,
-0.0750439912f, 0.142209008f, 0.100143865f, 0.112874731f };
+const double patchmodel_patchmean[FEATURE_POINTS_NUMBER]
+= { 6.21138296e-09, 5.84193272e-09, 1.9981103e-08, -2.2320954e-09, 6.68089273e-09, 9.55952562e-09, 4.79515672e-09, 1.1791621e-08, -4.90676166e-09, 3.74068421e-09, 4.39184014e-08, 5.06608693e-08, 2.80416614e-08, 2.9255844e-08, 3.24962315e-08, 4.33815437e-08, 8.5989555e-08,
+1.45086201e-08, 2.0427521e-08, 3.71374504e-08, 1.83185769e-08, 1.58709685e-08, 8.32494607e-08, 5.62949865e-08 };
 
-const float patchmodel_patches[FEATURE_POINTS_NUMBER][PATCH_SIZE_X_PATCH_SIZE]
+const double patchmodel_patchstddev[FEATURE_POINTS_NUMBER]
+= { 0.134744823, 0.123415157, 0.139128074, 0.0994755104, 0.132120162, 0.137144953, 0.128151864, 0.132752731, 0.0971035734, 0.143054113, 0.106319413, 0.104697235, 0.103702798, 0.0862262845, 0.117471114, 0.136615664, 0.108107507, 0.142582104, 0.0805974901, 0.0704699755,
+0.0750439912, 0.142209008, 0.100143865, 0.112874731 };
+
+const double patchmodel_patches[FEATURE_POINTS_NUMBER][PATCH_SIZE * PATCH_SIZE]
 = { { 1.85475908e-002, 1.71390921e-002, 1.52594671e-002, 1.33215301e-002, 1.12599321e-002, 8.88669491e-003, 6.06769929e-003, 3.00576142e-003, 9.98997202e-005, -2.78533949e-003, -6.13184366e-003, 1.53115066e-002, 1.29538942e-002,
 1.02665937e-002, 7.24922540e-003, 3.26828309e-003, -1.68372924e-003, -6.55390648e-003, -9.88433044e-003, -1.10840201e-002, -1.12868501e-002, -1.24087287e-002, 1.20310942e-002, 8.67131539e-003, 4.58760001e-003, -6.15520403e-004, -7.48189306e-003, -1.49075529e-002, -2.02550832e-002,
 -2.12404672e-002, -1.80575997e-002, -1.38735482e-002, -1.24824019e-002, 9.32476670e-003, 4.80561005e-003, -1.25258160e-003, -9.19825491e-003, -1.84070468e-002, -2.61622649e-002, -2.91248430e-002, -2.58280374e-002, -1.80976652e-002, -1.07962582e-002, -8.58878531e-003, 7.60171190e-003,
@@ -246,8 +249,8 @@ const float patchmodel_patches[FEATURE_POINTS_NUMBER][PATCH_SIZE_X_PATCH_SIZE]
 1.10232299e-002, 1.01683922e-002, 8.92404187e-003, 7.52376765e-003, 6.29011216e-003, 5.43911755e-003, 4.68890509e-003, 3.33945174e-003, 1.15612766e-003, -1.57077995e-003, -4.35904693e-003 } };
 
 //log table based on exponential for input range 1 ~ 256
-const float logTable[256]
-= { 0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469, 1.945910149, 2.079441542, 2.197224577, 2.302585093, 2.397895273, 2.48490665, 2.564949357, 2.63905733, 2.708050201, 2.772588722, 2.833213344, 2.890371758, 2.944438979, 2.995732274, 3.044522438,
+const double logTable[256]
+= { 0.0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469, 1.945910149, 2.079441542, 2.197224577, 2.302585093, 2.397895273, 2.48490665, 2.564949357, 2.63905733, 2.708050201, 2.772588722, 2.833213344, 2.890371758, 2.944438979, 2.995732274, 3.044522438,
 3.091042453, 3.135494216, 3.17805383, 3.218875825, 3.258096538, 3.295836866, 3.33220451, 3.36729583, 3.401197382, 3.433987204, 3.465735903, 3.496507561, 3.526360525, 3.555348061, 3.583518938, 3.610917913, 3.63758616, 3.663561646, 3.688879454, 3.713572067, 3.737669618, 3.761200116,
 3.784189634, 3.80666249, 3.828641396, 3.850147602, 3.871201011, 3.891820298, 3.912023005, 3.931825633, 3.951243719, 3.970291914, 3.988984047, 4.007333185, 4.025351691, 4.043051268, 4.060443011, 4.077537444, 4.094344562, 4.110873864, 4.127134385, 4.143134726, 4.158883083, 4.17438727,
 4.189654742, 4.204692619, 4.219507705, 4.234106505, 4.248495242, 4.262679877, 4.276666119, 4.290459441, 4.304065093, 4.317488114, 4.33073334, 4.343805422, 4.356708827, 4.369447852, 4.382026635, 4.394449155, 4.406719247, 4.418840608, 4.430816799, 4.442651256, 4.454347296, 4.465908119,
@@ -267,18 +270,16 @@ static void check_ft_status
     void
     )
 {
-	/* 0.473669 is normalized sample size parameter */
-	unsigned short face_width = (unsigned short)(tracker_params.p[0] * 0.473669);
-	float yaw_angle = 45.0f * (float)tracker_params.p[1] / ((float)tracker_params.p[0]+ 0.0001f);
-	float response_sum = 0;
-	int i;
-	for(i = 0; i < FEATURE_POINTS_NUMBER; i++)
+	double yaw_angle = 45.0 * tracker_params.p[1] / (tracker_params.p[0]+ 0.0001);
+	double response_sum = 0;
+	int i = 0;
+	for(i = 0; i < FEATURE_POINTS_NUMBER; ++i)
         {
 		response_sum += tracker_params.match_responses[i];
 	    }
-	response_sum *= FEATURE_POINTS_NUMBER_RECIPROCAL;
-	/* reset(re-detect) condition: 1. face width 2. yaw angle 3. response result */
-	if(face_width > 250.0f || face_width < 110.0f || yaw_angle > 35.0f || yaw_angle < -35.0f || response_sum < 0.5f)
+	response_sum /= FEATURE_POINTS_NUMBER;
+	//reset(re-detect) condition: 1. yaw angle 2. response result
+	if(yaw_angle > 35.0 || yaw_angle < -35.0 || response_sum < 0.5)
         {
 		tracker_params.track_reset_count += (tracker_params.track_reset_count < FACE_TRACKING_RESET_COUNT_BORDER);
 	    } 
@@ -293,18 +294,18 @@ static void check_ft_status
 	    }
 }
 
-static float find_max
+static double find_max
     (
-    const float* input_tm_result, 
+    const double* input_tm_result, 
     const unsigned char search_size, 
-    point_2f32_lincoln* max_location
+    point_2d32_lincoln* max_location
     )
 {
-	int i;
+	int i = 0;
 	int location = 0;
-	float maximum = input_tm_result[0];
+	double maximum = input_tm_result[0];
 	const unsigned char resultsize = search_size + 1;
-	for(i = 0; i < resultsize * resultsize; i++)
+	for(i = 0; i < resultsize * resultsize; ++i)
         {
 		if(input_tm_result[i] > maximum)
             {
@@ -312,76 +313,65 @@ static float find_max
 			location = i;
 		    }
 	    }
-	max_location->x = (int)(location % resultsize);
-	max_location->y = (int)(location / resultsize);
+	max_location->x = location % resultsize;
+	max_location->y = location / resultsize;
 	return maximum;
 }
 
 static void log_and_template_match
     (
     const int index, 
-    const float* patch, 
+    const double* patch, 
     const unsigned char wsize,
 	const unsigned char* affined_patch, 
-    float* log_affined_patch,
-	float* ncc_result
+    double* log_affined_patch,
+    double* ncc_result
     )
 {
-	int x, y, i, j;
+    int x = 0;
+    int y = 0;
+    int i = 0;
+    int j = 0;
 	int count = 0;
-	float temp_pixel = 0.0f;
-	float src_roi_square_sum = 0.0f;
-	float src_roi_mean = 0.0f;
-
-	for(i = 0; i < wsize * wsize; i++)
+	double temp_pixel = 0.0f;
+	double src_roi_square_sum = 0.0f;
+	double src_roi_mean = 0.0f;
+    const int PATCH_SIZE_SQR = PATCH_SIZE * PATCH_SIZE;
+    //log-processing brightness range suppression
+	for(i = 0; i < wsize * wsize; ++i)
         {
 		log_affined_patch[i] = logTable[affined_patch[i]];
 	    }
-#if 0 /* pre-training each patch mean and standard deviation */
-	for(j = 0; j < 24; j++){
-		float patchmean_lincoln = 0.0f;
-		for(i = 0; i < 121; i++){
-			patchmean_lincoln += patchmodel_patches[j][i];
-		}
-		patchmean_lincoln = patchmean_lincoln / 121.0f;
-
-		float patchstddev_lincoln = 0.0f;
-		for(i = 0; i < 121; i++){
-			patchstddev_lincoln += (patchmodel_patches[j][i] - patchmean_lincoln) * (patchmodel_patches[j][i] - patchmean_lincoln);
-		}
-		patchstddev_lincoln = sqrt(patchstddev_lincoln);
-		printf("patchstddev_lincoln = %f\n", patchstddev_lincoln);
-	}
-#endif
-	for(y = 5; y < wsize - 5; y++)
+    //template matching
+    const int PATCH_RADIUS = PATCH_SIZE >> 1;
+    for (y = PATCH_RADIUS; y < wsize - PATCH_RADIUS; y++)
         {
-		for(x = 5; x < wsize - 5; x++)
+        for (x = PATCH_RADIUS; x < wsize - PATCH_RADIUS; x++)
             {
-			temp_pixel = 0.0f;
-			src_roi_square_sum = 0.0f;
-			src_roi_mean = 0.0f;
-			for(j = -5; j < 6; j++)
+			temp_pixel = 0.0;
+			src_roi_square_sum = 0.0;
+			src_roi_mean = 0.0;
+            for (j = -PATCH_RADIUS; j < PATCH_RADIUS + 1; ++j)
                 {
-				for(i = -5; i < 6; i++)
+                for (i = -PATCH_RADIUS; i < PATCH_RADIUS + 1; ++i)
                     {
 					src_roi_mean += log_affined_patch[x + i + (y + j) * wsize];
 				    }
 			    }
-			/* note: 0.0082644628 = 1 / 121 (hard code here, the value should manual adjust with PATCH_SIZE) */
-			src_roi_mean *= 0.0082644628;
+            src_roi_mean /= PATCH_SIZE_SQR;
 
-			for(j = -5; j < 6; j++)
+            for (j = -PATCH_RADIUS; j < PATCH_RADIUS + 1; ++j)
                 {
-				for(i = -5; i < 6; i++)
+                for (i = -PATCH_RADIUS; i < PATCH_RADIUS + 1; ++i)
                     {
-					float tempix_minus_mean = log_affined_patch[x + i + (y + j) * wsize] - src_roi_mean;
-					temp_pixel += tempix_minus_mean * (patch[i + 5 + (j + 5) * 11] - patchmodel_patchmean[index]);
+					double tempix_minus_mean = log_affined_patch[x + i + (y + j) * wsize] - src_roi_mean;
+                    temp_pixel += tempix_minus_mean * (patch[i + PATCH_RADIUS + (j + PATCH_RADIUS) * PATCH_SIZE] - patchmodel_patchmean[index]);
 					src_roi_square_sum += tempix_minus_mean * tempix_minus_mean;
 				    }
 			    }
-			/* normalized cross-correlation score values range from 1 (perfect match) to -1 (completely anti-correlated) */
+			//normalized cross-correlation score values range from 1 (perfect match) to -1 (completely anti-correlated)
 			ncc_result[count] = temp_pixel / (patchmodel_patchstddev[index] * sqrt(src_roi_square_sum));
-			count++;
+			++count;
 		    }
 	    }
 }
@@ -389,7 +379,7 @@ static void log_and_template_match
 static void affine_transform
     (
     const unsigned char* src, 
-    const float* M,
+    const double* M,
 	const unsigned char wsize, 
     unsigned char* affined_dst
     )
@@ -400,18 +390,18 @@ static void affine_transform
         {
 		for(x = 0; x < wsize; x++)
             {
-			float fx = M[0] * x + M[1] * y + M[2];
-			float fy = M[3] * x + M[4] * y + M[5];
+            double fx = M[0] * x + M[1] * y + M[2];
+            double fy = M[3] * x + M[4] * y + M[5];
 			int sy = (int)fy;
 			fy -= sy;
 			short cbufy[2];
-			cbufy[0] = (1.0f - fy) * 2048;
+			cbufy[0] = (short)((1.0 - fy) * 2048);
 			cbufy[1] = 2048 - cbufy[0];
 
 			int sx = (int)fx;
 			fx -= sx;
 			short cbufx[2];
-			cbufx[0] = (1.0f - fx) * 2048;
+			cbufx[0] = (short)((1.0 - fx) * 2048);
 			cbufx[1] = 2048 - cbufx[0];
 
 			affined_dst[count] = (src[sx + sy * IMG_WIDTH] * cbufx[0] * cbufy[0] +
@@ -419,20 +409,20 @@ static void affine_transform
 								  src[sx + 1 + sy * IMG_WIDTH] * cbufx[1] * cbufy[0] +
 								  src[sx + 1 + (sy + 1) * IMG_WIDTH] * cbufx[1] * cbufy[1]) >> 22;
 
-			count++;
+			++count;
 		    }
 	    }
 }
 
 static void apply_simil
     (
-    const float* sim, 
-    const point_2f32_lincoln* in_pts,
-    point_2f32_lincoln* out_pts
+    const double* sim, 
+    const point_2f64_lincoln* in_pts,
+    point_2f64_lincoln* out_pts
     ) 
 {
-	int i;
-	for (i = 0; i < FEATURE_POINTS_NUMBER; i++) 
+	int i = 0;
+	for (i = 0; i < FEATURE_POINTS_NUMBER; ++i) 
         {
 		out_pts[i].x = sim[0] * in_pts[i].x + sim[1] * in_pts[i].y + sim[2];
 		out_pts[i].y = sim[3] * in_pts[i].x + sim[4] * in_pts[i].y + sim[5];
@@ -441,29 +431,31 @@ static void apply_simil
 
 static void calc_affine_simil
     (
-    float* sim_ref_to_cur, 
-    float* sim_cur_to_ref
+    double* sim_ref_to_cur, 
+    double* sim_cur_to_ref
     )
 {
-	float mx = 0, my = 0;
-	int i;
-	for(i = 0; i < FEATURE_POINTS_NUMBER; i++){
+    double mx = 0.0f;
+    double my = 0.0f;
+	int i = 0;
+	for(i = 0; i < FEATURE_POINTS_NUMBER; i++)
+        {
 		mx += tracker_params.feature_points[i].x;
 		my += tracker_params.feature_points[i].y;
-	}
-	mx *= FEATURE_POINTS_NUMBER_RECIPROCAL;
-	my *= FEATURE_POINTS_NUMBER_RECIPROCAL;
+	    }
+    mx /= FEATURE_POINTS_NUMBER;
+    my /= FEATURE_POINTS_NUMBER;
 
-	float b = 0, c = 0;
+    double b = 0.0f;
+    double c = 0.0f;
 	for(i = 0; i < FEATURE_POINTS_NUMBER; i++){
 		b += (patchmodel_reference[2 * i] * (tracker_params.feature_points[i].x - mx) + patchmodel_reference[2 * i + 1] * (tracker_params.feature_points[i].y - my));
 		c += (patchmodel_reference[2 * i] * (tracker_params.feature_points[i].y - my) - patchmodel_reference[2 * i + 1] * (tracker_params.feature_points[i].x - mx));
 	}
-	/* 2.243621e-05 = patchmodel_reference square sum reciprocal */
-	float scale = sqrt(b * b + c * c) * 2.243621e-05;
-	float theta = atan2(c, b);
-	float sc = scale * cos(theta);
-	float ss = scale * sin(theta);
+    double scale = sqrt(b * b + c * c) * patchmodel_reference_square_sum_reciprocal;
+    double theta = atan2(c, b);
+    double sc = scale * cos(theta);
+    double ss = scale * sin(theta);
 	sim_ref_to_cur[0] = sc;
 	sim_ref_to_cur[1] = -ss;
 	sim_ref_to_cur[2] = mx;
@@ -471,7 +463,7 @@ static void calc_affine_simil
 	sim_ref_to_cur[4] = sc;
 	sim_ref_to_cur[5] = my;
 
-	float recip_d = 1/(scale * scale);
+    double recip_d = 1 / (scale * scale);
 	sim_cur_to_ref[0] = sim_ref_to_cur[4] * recip_d;
 	sim_cur_to_ref[1] = -sim_ref_to_cur[1] * recip_d;
 	sim_cur_to_ref[2] = (sim_ref_to_cur[1] * sim_ref_to_cur[5] - sim_ref_to_cur[2] * sim_ref_to_cur[4]) * recip_d;
@@ -486,18 +478,18 @@ static void calc_peaks
     const unsigned char fitting_search_size
     )
 {
-	/* make two affine transformation matrix */
-	/* 1. frontal shape (reference) to current shape (tracker_params.points) */
-	float affinematrix_front_to_current[6] = {0};
-	/* 2. current shape (tracker_params.points) to frontal shape (reference) */
-	float affinematrix_current_to_front[6] = {0};
+	//make two affine transformation matrix
+	//frontal shape (reference) to current shape (tracker_params.points)
+	double affinematrix_front_to_current[6] = {0};
+	//current shape (tracker_params.points) to frontal shape (reference)
+	double affinematrix_current_to_front[6] = {0};
 	calc_affine_simil(affinematrix_front_to_current, affinematrix_current_to_front);
-	/* note: should check whether __STDC_IEC_559__ is defined */
-	point_2f32_lincoln* transformed_points = (point_2f32_lincoln*)malloc_lincoln(FEATURE_POINTS_NUMBER * sizeof(point_2f32_lincoln));
+
+	point_2f64_lincoln* transformed_points = (point_2f64_lincoln*)malloc_lincoln(FEATURE_POINTS_NUMBER * sizeof(point_2f64_lincoln));
 	apply_simil(affinematrix_current_to_front, tracker_params.feature_points, transformed_points);
 
-	/* the last col of affine transform is an adjustment, let feature points be the center of its related patches */
-	float affine_matrix_temp[6] = {0};
+	//the last col of affine transform is an adjustment, let feature points be the center of its related patches
+	double affine_matrix_temp[6] = {0};
 	affine_matrix_temp[0] = affinematrix_front_to_current[0];
 	affine_matrix_temp[1] = affinematrix_front_to_current[1];
 	affine_matrix_temp[3] = affinematrix_front_to_current[3];
@@ -505,24 +497,23 @@ static void calc_peaks
 
 	unsigned char wsize = fitting_search_size + PATCH_SIZE;
 	unsigned char* affined_patch = (unsigned char*)malloc_lincoln(wsize * wsize * sizeof(unsigned char));
-	float* log_affined_patch = (float*)malloc_lincoln(wsize * wsize * sizeof(float));
-	/* note: should check whether __STDC_IEC_559__ is defined */
-	float* templ_match_result = (float*)malloc_lincoln((fitting_search_size + 1) * (fitting_search_size + 1) * sizeof(float));
-	int i;
+    double* log_affined_patch = (double*)malloc_lincoln(wsize * wsize * sizeof(double));
+    double* templ_match_result = (double*)malloc_lincoln((fitting_search_size + 1) * (fitting_search_size + 1) * sizeof(double));
+	int i = 0;
 	for(i = 0; i < FEATURE_POINTS_NUMBER; i++)
         {
-		/* adjust patch center */
-		float halfwidth = (float)(wsize - 1) * 0.5f;
+		//adjust patch center
+		double halfwidth = (wsize - 1) * 0.5;
 		affine_matrix_temp[2] = tracker_params.feature_points[i].x - (affine_matrix_temp[0] * halfwidth + affine_matrix_temp[1] * halfwidth);
 		affine_matrix_temp[5] = tracker_params.feature_points[i].y - (affine_matrix_temp[3] * halfwidth + affine_matrix_temp[4] * halfwidth);
 		affine_transform(src, affine_matrix_temp, wsize, affined_patch);
 		log_and_template_match(i, patchmodel_patches[i], wsize, affined_patch, log_affined_patch, templ_match_result);
 
-		point_2f32_lincoln max_loc = {0.0f, 0.0f};
+        point_2d32_lincoln max_loc = { 0, 0 };
 		tracker_params.match_responses[i] = find_max(templ_match_result, fitting_search_size, &max_loc);
 
-		transformed_points[i].x += (max_loc.x - 0.5f * fitting_search_size);
-		transformed_points[i].y += (max_loc.y - 0.5f * fitting_search_size);
+		transformed_points[i].x += (max_loc.x - 0.5 * fitting_search_size);
+		transformed_points[i].y += (max_loc.y - 0.5 * fitting_search_size);
 	    }
 	apply_simil(affinematrix_front_to_current, transformed_points, tracker_params.feature_points);
 }
@@ -530,7 +521,7 @@ static void calc_peaks
 static void calc_shape
     (
     double* p, 
-    point_2f32_lincoln* pts
+    point_2f64_lincoln* pts
     )
 {
     int i = 0;
@@ -557,14 +548,13 @@ static void clamp
     double* p
     )
 {
-	/* todo :lots of post modified here, tuned based on testing */
 	double scale = p[0];
-	/* the p[0] to p[3] are the rigid parameter, so the iteration start from p[4] */
-	/* ignore p[5], p[7] to reduced eigen-space dimension */
-	/* up-down */
+	//the p[0] to p[3] are the rigid parameter, so the iteration start from p[4]
+	//ignore p[5], p[7] to reduced eigen-space dimension
+	//up-down
 	double v4 = CLAMP_FACTOR * shapemodel_e[4] * scale;
-	/* left-right */
-	double v6 = 1.1 * CLAMP_FACTOR * shapemodel_e[6] * scale;
+	//left-right
+	double v6 = CLAMP_FACTOR * shapemodel_e[6] * scale;
 
 	if(fabs(p[4]) > v4)
         {
@@ -588,22 +578,20 @@ static void clamp
 			p[6] = -v6;
 		    }
 	    }
-	/* allow more room for yaw-angle turning */
-	p[6] *= 1.1;
 	p[5] = 0.0;
 	p[7] = 0.0;
 }
 
 static void calc_params
     (
-    point_2f32_lincoln* pts,
+    point_2f64_lincoln* pts,
     double* p
     )
 {
 	int i = 0;
     const int SUB_SPACE_DIM_X_2 = SUB_SPACE_DIM * 2;
 	memset(p, 0, SUB_SPACE_DIM * sizeof(double));
-	for(i = 0; i < FEATURE_POINTS_NUMBER; i++)
+	for(i = 0; i < FEATURE_POINTS_NUMBER; ++i)
         {
 		p[0] += pts[i].x * shapemodel_V[SUB_SPACE_DIM_X_2 * i + 0] + pts[i].y * shapemodel_V[SUB_SPACE_DIM_X_2 * i + 8];
 		p[1] += pts[i].x * shapemodel_V[SUB_SPACE_DIM_X_2 * i + 1] + pts[i].y * shapemodel_V[SUB_SPACE_DIM_X_2 * i + 9];
@@ -638,16 +626,16 @@ static bool detect_face_and_init_feature_positions
 	if(fdresult->num_elems > 0)
         {
 		rect_u16_lincoln faceroi = ((rect_u16_lincoln*)fdresult->beginning)[0];
-		float face_center_x = (float)(faceroi.x + (faceroi.w >> 1));
-		float face_center_y = (float)(faceroi.y + (faceroi.h >> 1));
-		float patch_avg_center_offset_x = detector_offset[0] * faceroi.w;
-		float patch_avg_center_offset_y = detector_offset[1] * faceroi.w;
-		float patch_avg_size_offset = detector_offset[2] * faceroi.w;
+		int face_center_x = faceroi.x + (faceroi.w >> 1);
+		int face_center_y = faceroi.y + (faceroi.h >> 1);
+        double patch_avg_center_offset_x = landmark_pos_offset[0] * faceroi.w;
+        double patch_avg_center_offset_y = landmark_pos_offset[1] * faceroi.w;
+        double patch_avg_size_offset = landmark_pos_offset[2] * faceroi.w;
 		int i = 0;
 		for(i = 0; i < FEATURE_POINTS_NUMBER; i++)
             {
-			tracker_params.feature_points[i].x = face_center_x + patch_avg_center_offset_x + patch_avg_size_offset * detector_reference[2 * i];
-			tracker_params.feature_points[i].y = face_center_y + patch_avg_center_offset_y + patch_avg_size_offset * detector_reference[2 * i + 1];
+            tracker_params.feature_points[i].x = face_center_x + patch_avg_center_offset_x + patch_avg_size_offset * landmark_init_pos_norm[2 * i];
+            tracker_params.feature_points[i].y = face_center_y + patch_avg_center_offset_y + patch_avg_size_offset * landmark_init_pos_norm[2 * i + 1];
 		    }
 		return true;
 	    }
@@ -658,17 +646,17 @@ static bool detect_face_and_init_feature_positions
 }
 
 /*
- * the feature points layout and index (there are four regions: left eye, right eye, nose, mouth)
- * 			   1			  6
- *	        0  4  2        7  9  5
- *		  	   3 			  8
- *		  	        10  16
- *		  	      11	  15
- *		  	       12 13 14
- *
- *		  	       18 19 20
- *		  	      17       21
- *		  	         23 22
+ the feature points layout and index (there are four regions: left eye, right eye, nose, mouth)
+ 			   1			  6
+	        0  4  2        7  9  5
+		  	   3 			  8
+		  	        10  16
+		  	      11	  15
+		  	       12 13 14
+
+		  	       18 19 20
+		  	      17       21
+		  	         23 22
  */
 
 void face_track
@@ -690,6 +678,7 @@ void face_track
 		    }
 	    }
 
+    //two times patch matching with descending searching area
 	int level = 0;
 	for(level = 0; level < 2; ++level)
         {

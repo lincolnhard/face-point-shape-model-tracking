@@ -22,6 +22,18 @@
 #define VECTOR_INIT_SIZE 512
 
 typedef struct
+    {
+    int x;
+    int y;
+    }point_2d32_lincoln;
+
+typedef struct
+    {
+    double x;
+    double y;
+    }point_2f64_lincoln;
+
+typedef struct
 	{
 	float x;
 	float y;
